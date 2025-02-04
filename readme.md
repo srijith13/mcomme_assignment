@@ -48,6 +48,7 @@ This API is designed to manage and apply various types of discount coupons for a
 
 - Since I use SQL based db it is limited by the dynamic changes in conditions and types of coupons that can be used. Solution: Use of NoSQL based db would ideally give much more flexibility.
 - Condition to check if more than one coupon is applied (assumed only one can be applied)
+- Can only add new coupons which fit in the current db set up implying only sub categories of the existing coupons will work best. For new type of coupon it is best to have an NoSQL based DB
 
 ### Improvements
 
@@ -56,6 +57,7 @@ This API is designed to manage and apply various types of discount coupons for a
 - **Coupon validity**: The check of expiration should be done also during the _get_coupons_ api call.
 - Expiration of coupon should be based on both date and time there by giving more flexibility.
 - Addition of Docker for easy deployment and have standardized units.
+
 
 ## **Database Schema:**
 ```sh
