@@ -57,6 +57,7 @@ This API is designed to manage and apply various types of discount coupons for a
 - **Coupon validity**: The check of expiration should be done also during the _get_coupons_ api call.
 - Expiration of coupon should be based on both date and time there by giving more flexibility.
 - Addition of Docker for easy deployment and have standardized units.
+- Test cases are currently written for two functions that had the most business logic and only success flows are written. Need to write test cases for failures, null conditions and possible edge cases.
 
 ## **Database Schema:**
 ```sh
