@@ -10,7 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateCoupons(c *gin.Context) {
+type CouponController struct {
+	couponService services.IService
+}
+
+func NewCouponController(couponService services.IService) *CouponController {
+	return &CouponController{couponService: couponService}
+}
+
+func (h *CouponController) CreateCoupons(c *gin.Context) {
 	var request model.CouponsRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Println("Error Binding Json", err)
@@ -24,7 +32,7 @@ func CreateCoupons(c *gin.Context) {
 	// 	return
 	// }
 
-	result, err := services.CreateCoupons(&request)
+	result, err := h.couponService.CreateCoupons(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", result, err))
 	} else {
@@ -32,7 +40,7 @@ func CreateCoupons(c *gin.Context) {
 	}
 }
 
-func GetCoupons(c *gin.Context) {
+func (h *CouponController) GetCoupons(c *gin.Context) {
 	id := c.Param("id")
 	var couponId int64 = -1
 	var err error
@@ -44,7 +52,7 @@ func GetCoupons(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", nil, err))
 	}
 
-	result, err := services.GetCoupons(couponId)
+	result, err := h.couponService.GetCoupons(couponId)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", result, err))
@@ -53,7 +61,7 @@ func GetCoupons(c *gin.Context) {
 	}
 }
 
-func UpdateCoupons(c *gin.Context) {
+func (h *CouponController) UpdateCoupons(c *gin.Context) {
 	var request model.CouponsRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Println("Error Binding Json", err)
@@ -61,7 +69,7 @@ func UpdateCoupons(c *gin.Context) {
 		return
 	}
 
-	result, err := services.UpdateCoupons(&request)
+	result, err := h.couponService.UpdateCoupons(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", result, err))
 	} else {
@@ -69,7 +77,7 @@ func UpdateCoupons(c *gin.Context) {
 	}
 }
 
-func DeleteCoupons(c *gin.Context) {
+func (h *CouponController) DeleteCoupons(c *gin.Context) {
 	id := c.Param("id")
 	couponId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -77,7 +85,7 @@ func DeleteCoupons(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", nil, err))
 	}
 
-	err = services.DeleteCoupons(couponId)
+	err = h.couponService.DeleteCoupons(couponId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", nil, err))
 	} else {
@@ -85,7 +93,7 @@ func DeleteCoupons(c *gin.Context) {
 	}
 }
 
-func GetApplicableCoupons(c *gin.Context) {
+func (h *CouponController) GetApplicableCoupons(c *gin.Context) {
 	var request model.CartRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Println("Error Binding Json", err)
@@ -93,7 +101,7 @@ func GetApplicableCoupons(c *gin.Context) {
 		return
 	}
 
-	result, err := services.GetApplicableCoupons(&request)
+	result, err := h.couponService.GetApplicableCoupons(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", result, err))
 	} else {
@@ -101,7 +109,7 @@ func GetApplicableCoupons(c *gin.Context) {
 	}
 }
 
-func ApplyCoupons(c *gin.Context) {
+func (h *CouponController) ApplyCoupons(c *gin.Context) {
 	id := c.Param("id")
 	couponId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -114,7 +122,7 @@ func ApplyCoupons(c *gin.Context) {
 		return
 	}
 	request.CouponId = couponId
-	result, err := services.ApplyCoupons(&request)
+	result, err := h.couponService.ApplyCoupons(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.BuildResponse("Bad Request", result, err))
 	} else {

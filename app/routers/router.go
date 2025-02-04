@@ -8,20 +8,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRoutes() {
+func InitRoutes(controller *controllers.CouponController) {
 	router := gin.Default()
 	discounts := router.Group("/discounts/v1") // Grouping the routes
 
 	// notes.Use(middleware.AppAutherization) If authentication is added
 
-	discounts.POST("/coupons", controllers.CreateCoupons)
-	discounts.GET("/coupons", controllers.GetCoupons)
-	discounts.GET("/coupons/:id", controllers.GetCoupons)
-	discounts.PUT("/coupons", controllers.UpdateCoupons)
-	discounts.DELETE("/coupons/:id", controllers.DeleteCoupons)
+	discounts.POST("/coupons", controller.CreateCoupons)
+	discounts.GET("/coupons", controller.GetCoupons)
+	discounts.GET("/coupons/:id", controller.GetCoupons)
+	discounts.PUT("/coupons", controller.UpdateCoupons)
+	discounts.DELETE("/coupons/:id", controller.DeleteCoupons)
 
-	discounts.POST("/applicable-coupons", controllers.GetApplicableCoupons)
-	discounts.POST("/apply-coupon/:id", controllers.ApplyCoupons)
+	discounts.POST("/applicable-coupons", controller.GetApplicableCoupons)
+	discounts.POST("/apply-coupon/:id", controller.ApplyCoupons)
 
 	router.Run(fmt.Sprintf(`:%s`, config.AppPort))
 }

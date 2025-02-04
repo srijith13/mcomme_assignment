@@ -4,16 +4,29 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"monk-commerce/app/db"
 	"monk-commerce/app/helper"
 	"monk-commerce/app/model"
 	"strings"
 	"time"
 )
 
-var dbCon *sql.DB = db.CreateDbConPool()
+type IService interface {
+	CreateCoupons(request *model.CouponsRequest) (interface{}, error)
+	GetCoupons(couponId int64) (interface{}, error)
+	UpdateCoupons(request *model.CouponsRequest) (interface{}, error)
+	DeleteCoupons(couponId int64) error
+	GetApplicableCoupons(request *model.CartRequest) (interface{}, error)
+	ApplyCoupons(request *model.UpdatedCartRequest) (interface{}, error)
+}
+type couponService struct {
+	db *sql.DB
+}
 
-func CreateCoupons(request *model.CouponsRequest) (interface{}, error) {
+func NewCouponService(db *sql.DB) IService {
+	return &couponService{db}
+}
+
+func (s *couponService) CreateCoupons(request *model.CouponsRequest) (interface{}, error) {
 
 	var query string
 
@@ -34,7 +47,7 @@ func CreateCoupons(request *model.CouponsRequest) (interface{}, error) {
 		query = fmt.Sprintf(`INSERT INTO coupons (coupon_type,buy_product_id,buy_product_quantity,get_product_id,get_product_quantity,repition_limit,expiration_date,is_active)
 		VALUES ('%s', '%v', '%v', '%v', '%v', %d, '%s', %t )`, request.Type, buyProdIds, buyPrdQuant, getProdIds, getProdQuant, request.Details.RepitionLimit, request.ExpirationDate, true)
 	}
-	_, err := dbCon.Exec(query)
+	_, err := s.db.Exec(query)
 
 	if err != nil {
 		log.Println("Error Executing query:", err)
@@ -43,7 +56,7 @@ func CreateCoupons(request *model.CouponsRequest) (interface{}, error) {
 	return "Create Coupons Successful", nil
 }
 
-func GetCoupons(couponId int64) (interface{}, error) {
+func (s *couponService) GetCoupons(couponId int64) (interface{}, error) {
 	var coupons []model.Coupons
 
 	var query string
@@ -54,7 +67,7 @@ func GetCoupons(couponId int64) (interface{}, error) {
 		query = "select * from coupons where is_active = true"
 
 	}
-	rows, err := dbCon.Query(query)
+	rows, err := s.db.Query(query)
 	if err != nil {
 		log.Println("Error Executing query:", err)
 	}
@@ -68,7 +81,7 @@ func GetCoupons(couponId int64) (interface{}, error) {
 }
 
 // Function to dynamically update database
-func UpdateCoupons(request *model.CouponsRequest) (interface{}, error) {
+func (s *couponService) UpdateCoupons(request *model.CouponsRequest) (interface{}, error) {
 	// CompareData to check which are the keys that have new data to be updated for the given Id
 	colVal, colName := helper.CompareData(request)
 
@@ -81,7 +94,7 @@ func UpdateCoupons(request *model.CouponsRequest) (interface{}, error) {
 
 	query := fmt.Sprintf("update coupons set %s where coupon_id = %d", strings.Join(updateParts, ", "), request.CouponId)
 
-	_, err := dbCon.Exec(query)
+	_, err := s.db.Exec(query)
 	if err != nil {
 		log.Println("Error Executing query:", err)
 		return "Error", err
@@ -90,21 +103,21 @@ func UpdateCoupons(request *model.CouponsRequest) (interface{}, error) {
 	return "success", nil
 }
 
-func DeleteCoupons(couponId int64) error {
+func (s *couponService) DeleteCoupons(couponId int64) error {
 
 	// For soft delete
 	// query := "update coupons SET is_active = false WHERE coupon_id = $1"
 
 	query := "delete from coupons where coupon_id = $1"
 
-	_, err := dbCon.Exec(query, couponId)
+	_, err := s.db.Exec(query, couponId)
 	if err != nil {
 		log.Println("Error Executing query:", err)
 	}
 	return err
 }
 
-func GetApplicableCoupons(request *model.CartRequest) (interface{}, error) {
+func (s *couponService) GetApplicableCoupons(request *model.CartRequest) (interface{}, error) {
 	// Assuming all prices are Integer for ease of calculation
 	var coupons []model.Coupons // update structure for finalCoupons
 	var finalCoupons model.ApplicableCoupon
@@ -128,7 +141,7 @@ func GetApplicableCoupons(request *model.CartRequest) (interface{}, error) {
 
 	query := fmt.Sprintf(`select * from coupons where is_active = true and buy_product_id && ARRAY[%s]::bigint[]  or threshold <= %d `, strings.Join(proIds, ","), totalPrice)
 
-	rows, err := dbCon.Query(query) // get all the coupons based on productIds and check if it matches the threshold (threshold less than or equal to chart total) for chart based coupon
+	rows, err := s.db.Query(query) // get all the coupons based on productIds and check if it matches the threshold (threshold less than or equal to chart total) for chart based coupon
 	if err != nil {
 		log.Println("Error Executing query:", err)
 	}
@@ -147,7 +160,7 @@ func GetApplicableCoupons(request *model.CartRequest) (interface{}, error) {
 		// check if coupon is expired if it is expired set it to inactive state (or can delete). Ideally should also be done in /getCoupon api
 		if today.Equal(expiryDate) || today.After(expiryDate) {
 			query := "UPDATE coupons SET is_active = false WHERE coupon_id = $1"
-			_, err := dbCon.Exec(query, couponDetails.CouponId)
+			_, err := s.db.Exec(query, couponDetails.CouponId)
 			if err != nil {
 				log.Println("Error Executing query:", err)
 			}
@@ -212,7 +225,7 @@ func GetApplicableCoupons(request *model.CartRequest) (interface{}, error) {
 	return finalCoupons, nil
 }
 
-func ApplyCoupons(request *model.UpdatedCartRequest) (interface{}, error) {
+func (s *couponService) ApplyCoupons(request *model.UpdatedCartRequest) (interface{}, error) {
 	// Assuming all prices are Integer for ease of calculation
 	var coupons model.Coupons
 	var finalBillDetails model.UpdatedCartRequest = *request
@@ -231,7 +244,7 @@ func ApplyCoupons(request *model.UpdatedCartRequest) (interface{}, error) {
 
 	query := fmt.Sprintf(`select * from coupons where is_active = true and coupon_id = %d `, request.CouponId)
 
-	row := dbCon.QueryRow(query)
+	row := s.db.QueryRow(query)
 	helper.CouponDtoMapper(row, &coupons)
 
 	log.Println("Starting  Calculation of Discount, Final Total Price and discount on each product based on Types")

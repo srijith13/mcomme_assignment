@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"monk-commerce/app/config"
 
+	"github.com/labstack/gommon/log"
 	_ "github.com/lib/pq"
 )
 
-var connection = make(map[string]*sql.DB)
-
-func CreateDbConPool() *sql.DB {
+func InitDb() (*sql.DB, error) {
 	dbinfo := fmt.Sprintf(`host=%s user=%s password=%s dbname=%s sslmode=disable`, config.DbHost, config.DbUser, config.DbPass, "mct")
-	if connection["mct"] == nil {
-		connection["mct"], _ = sql.Open("postgres", dbinfo) //creating the db connection
+	db, err := sql.Open("postgres", dbinfo) //creating the db connection
+	if err != nil {
+		log.Errorf("DB Connection Failed %v", err)
+		return nil, err
 	}
-	return connection["mct"]
+	return db, nil
 }
