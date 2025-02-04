@@ -48,6 +48,7 @@ This API is designed to manage and apply various types of discount coupons for a
 
 - Since I use SQL based db it is limited by the dynamic changes in conditions and types of coupons that can be used. Solution: Use of NoSQL based db would ideally give much more flexibility.
 - Condition to check if more than one coupon is applied (assumed only one can be applied)
+- Can only add new coupons which fit in the current db set up implying only sub categories of the existing coupons will work best. For new type of coupon it is best to have an NoSQL based DB
 
 ### Improvements
 
